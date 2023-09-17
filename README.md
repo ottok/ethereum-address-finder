@@ -6,7 +6,24 @@ with specific suffix (for e.g. vanity Ethereum address purposes).
 To understand what the program does, see the Python docstrings and source code
 directly in file [ethaddrfinder.py](ethaddrfinder.py).
 
-## Usage
+## Quick installation and usage
+
+```
+# Get project source code
+git clone --shallow-since=1w --recurse-submodules --shallow-submodules \
+  https://gitlab.com/ottok/ethereum-address-finder.git
+# Enter project directory
+cd ethereum-address-finder
+# Replace FIND_SUFFIX with your custom value
+nano ethaddrfinder.py
+# Start the searh
+python3 ethaddrfinder.py
+# If Python complains about missing modules install them, which
+# Debian and Ubuntu would happen by running e.g.
+sudo apt install -y python3-sha3
+```
+
+## Usage explained
 
 Currently this the code is very crude and not user friendly.
 
@@ -36,6 +53,23 @@ Private key: 0xada488297c138f935ef66f50dd8edf352debde0c63606e302be8ae8df2765e3a
 Ethereum wallet address: 0x5fa2a5821a06848b52ca1f494a9375c8dbb9ca88
 INFO:__main__:Program ran for 8 seconds generating 2551 keys (~309/s).
 ```
+
+## Performance considerations
+
+The code is *not optimized* and it runs only on one single code, so don't
+expect wonders in terms of performance.
+
+If you have a beefy machine, you can start multiple processes in for example
+using [tmux](https://tmuxcheatsheet.com/) and monitor with
+[htop](https://htop.dev/) that you have all CPUs running at full utilization.
+
+The code has it been benchmarked if runs faster on standard
+[CPython](https://en.wikipedia.org/wiki/CPython) or
+[PyPy](https://en.wikipedia.org/wiki/PyPy), nor has it been tested if it could
+be run by [Cython](https://cython.org/).
+
+![Running 8 parallel instances in tmux panes](screenshot-with-tmux.png)
+
 
 ## Contributing
 
