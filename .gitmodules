@@ -1,0 +1,3 @@
+[submodule "ECPy"]
+	path = ECPy
+	url = https://github.com/cslashm/ECPy
