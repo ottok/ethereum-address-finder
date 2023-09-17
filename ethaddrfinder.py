@@ -77,10 +77,7 @@ import os
 import sys
 import time
 
-FIND_PREFIX = "cee8da88"
-FIND_PREFIX = "e8da88"
-FIND_PREFIX = "ea88"
-FIND_PREFIX = "a88"
+FIND_SUFFIX = "a88"
 
 def generate_key_pair(private_key: int = None) -> [int, bytes]:
     """Given private key, generate public key (Ethereum wallet address)."""
@@ -107,8 +104,14 @@ def generate_key_pair(private_key: int = None) -> [int, bytes]:
 
 def main():
     """Program entrypoint."""
+
+    # https://docs.python.org/3/library/logging.html#levels
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
+
+    # If program not running with DEBUG=1, don't log anything
+    if os.environ.get('DEBUG', False) is False:
+        logging.disable()
 
     counter = 0
     start_time = time.time()
@@ -117,9 +120,9 @@ def main():
     # initial_key = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     initial_key = int.from_bytes(os.urandom(32), byteorder="big")
 
-    prefix_length = len(FIND_PREFIX)
+    prefix_length = len(FIND_SUFFIX)
 
-    print(f"Trying private keys until Ethereum address suffix matches: {FIND_PREFIX}")
+    print(f"Trying private keys until Ethereum address suffix matches: {FIND_SUFFIX}")
     print(f"Press Ctrl+C to abort")
 
     print(f"Initial private key: {hex(initial_key)}")
@@ -147,7 +150,7 @@ def main():
                 print(f"Testing private key: {hex(private_key)}", end="\r")
 
             # Stop if prefix found
-            if eth_addr[-prefix_length:] == FIND_PREFIX:
+            if eth_addr[-prefix_length:] == FIND_SUFFIX:
                 print("Success! Found key pair:")
                 print(f"Private key: {hex(private_key)}")
                 print(f"Ethereum wallet address: 0x{eth_addr}")
