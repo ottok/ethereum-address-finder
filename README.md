@@ -63,10 +63,14 @@ If you have a beefy machine, you can start multiple processes in for example
 using [tmux](https://tmuxcheatsheet.com/) and monitor with
 [htop](https://htop.dev/) that you have all CPUs running at full utilization.
 
-The code has it been benchmarked if runs faster on standard
+The code has not been benchmarked if runs faster on standard
 [CPython](https://en.wikipedia.org/wiki/CPython) or
-[PyPy](https://en.wikipedia.org/wiki/PyPy), nor has it been tested if it could
-be run by [Cython](https://cython.org/).
+[PyPy](https://en.wikipedia.org/wiki/PyPy) as PyPy fails to start due to missing
+library `_keccak.pypy36-pp73-x86_64-linux-gnu.so`.
+
+In a quick benchmark the program did *not* run visibly faster when compiled with
+[Cython](https://cython.org/), perhaps due to lack of Cython specific
+optimizations in the code.
 
 ![Running 8 parallel instances in tmux panes](screenshot-with-tmux.png)
 
