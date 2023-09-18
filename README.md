@@ -20,7 +20,7 @@ nano ethaddrfinder.py
 python3 ethaddrfinder.py
 # If Python complains about missing modules install them, which
 # Debian and Ubuntu would happen by running e.g.
-sudo apt install -y python3-sha3
+sudo apt install -y python3-pycryptodome
 ```
 
 ## Usage explained

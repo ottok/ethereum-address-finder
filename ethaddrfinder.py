@@ -70,7 +70,7 @@ https://hackernoon.com/how-to-generate-an-ethereum-address-from-private-key-usin
 from ecpy.curves import Curve
 from ecpy.keys import ECPrivateKey
 
-from sha3 import keccak_256
+from Cryptodome.Hash import keccak
 
 import logging
 import os
@@ -79,7 +79,8 @@ import time
 
 FIND_SUFFIX = "a88"
 
-def generate_key_pair(private_key: int = None) -> [int, bytes]:
+
+def generate_key_pair(private_key: int = None) -> [int, str]:
     """Given private key, generate public key (Ethereum wallet address)."""
 
     # If no private key is given, generate one at random
@@ -97,9 +98,11 @@ def generate_key_pair(private_key: int = None) -> [int, bytes]:
     # concat_x_y = bytes.fromhex(hex(pu_key.W.x)[2:] + \
     #                            hex(pu_key.W.y)[2:])
 
-    public_key = keccak_256(concat_x_y).digest()[-20:]
+    keccak_hash = keccak.new(digest_bits=256)
+    keccak_hash.update(concat_x_y)
+    eth_addr = keccak_hash.hexdigest()
 
-    return private_key, public_key
+    return private_key, eth_addr
 
 
 def main():
@@ -139,8 +142,7 @@ def main():
                             f"(~{keys_per_second:.0f}/s)")
 
             # Generate key pair
-            private_key, public_key = generate_key_pair(initial_key + counter)
-            eth_addr = public_key.hex()
+            private_key, eth_addr = generate_key_pair(initial_key + counter)
             logger.debug(f"private key: {hex(private_key)}")
             logger.debug(f"eth address: 0x{eth_addr}")
 
