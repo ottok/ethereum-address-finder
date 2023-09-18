@@ -72,6 +72,7 @@ from ecpy.keys import ECPrivateKey
 
 from Cryptodome.Hash import keccak
 
+import concurrent.futures
 import logging
 import os
 import sys
@@ -80,12 +81,8 @@ import time
 FIND_SUFFIX = "a88"
 
 
-def generate_key_pair(private_key: int = None) -> [int, str]:
+def get_ethereum_address(private_key: int) -> str:
     """Given private key, generate public key (Ethereum wallet address)."""
-
-    # If no private key is given, generate one at random
-    if private_key is None:
-        private_key = int.from_bytes(os.urandom(32), byteorder="big")
 
     cv = Curve.get_curve("secp256k1")
     pv_key = ECPrivateKey(private_key, cv)
@@ -94,15 +91,36 @@ def generate_key_pair(private_key: int = None) -> [int, str]:
     concat_x_y = pu_key.W.x.to_bytes(32, byteorder="big") + \
                  pu_key.W.y.to_bytes(32, byteorder="big")
 
-    # alternatively:
-    # concat_x_y = bytes.fromhex(hex(pu_key.W.x)[2:] + \
-    #                            hex(pu_key.W.y)[2:])
-
     keccak_hash = keccak.new(digest_bits=256)
     keccak_hash.update(concat_x_y)
-    eth_addr = keccak_hash.hexdigest()
 
-    return private_key, eth_addr
+    eth_addr = keccak_hash.hexdigest()
+    return eth_addr
+
+
+def keys(initial_key: int = 0):
+    """Iterator that yields a list of private keys given an initial one."""
+    i = 0
+    while i < 99999999:
+        i += 1
+        yield initial_key + i
+
+
+def worker(private_key):
+    """Check if public key has suffix FIND_SUFFIX given private key."""
+    eth_addr = get_ethereum_address(private_key)
+    # print(f"private key: {hex(private_key)}")
+    # print(f"eth address: 0x{eth_addr}")
+
+    print(f"Testing private key: {hex(private_key)}", end="\r")
+
+    # Stop if prefix found
+    if eth_addr[-prefix_length:] == FIND_SUFFIX:
+        print("*********** Success! ***********                               ")
+        print("Found key pair:")
+        print(f"* Private key: {hex(private_key)}")
+        print(f"* Ethereum wallet address: 0x{eth_addr}")
+        sys.exit(0)
 
 
 def main():
@@ -117,62 +135,52 @@ def main():
         logging.disable()
 
     counter = 0
-    start_time = time.time()
+    start_time = time.perf_counter()
 
     # initial_key = 0x01234567890abcdef01234567890abcdef01234567890abcdef01234567890aa
     # initial_key = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
     initial_key = int.from_bytes(os.urandom(32), byteorder="big")
 
-    prefix_length = len(FIND_SUFFIX)
-
     print(f"Trying private keys until Ethereum address suffix matches: {FIND_SUFFIX}")
     print(f"Press Ctrl+C to abort")
-
     print(f"Initial private key: {hex(initial_key)}")
 
-    try:
-        while True:
-            counter += 1
+    global prefix_length
+    prefix_length = len(FIND_SUFFIX)
 
-            # Regular progress info
-            if counter % 1000 == 0:
-                mid_time = time.time() - start_time
-                keys_per_second = counter / mid_time
-                logger.info(f"Tested {counter} keys in {mid_time:.0f} seconds "
-                            f"(~{keys_per_second:.0f}/s)")
+    with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+        try:
+            for private_key in executor.map(
+                    worker,
+                    keys(initial_key),
+                    chunksize=1000):
 
-            # Generate key pair
-            private_key, eth_addr = generate_key_pair(initial_key + counter)
-            logger.debug(f"private key: {hex(private_key)}")
-            logger.debug(f"eth address: 0x{eth_addr}")
+                counter += 1
 
-            # Show what key we are testing, but avoid wasting I/O bandwidth so
-            # only update progress on every 10th key
-            if counter % 10 == 0:
-                print(f"Testing private key: {hex(private_key)}", end="\r")
+                # Regular progress info
+                if counter % 1000 == 0:
+                    mid_time = time.perf_counter() - start_time
+                    keys_per_second = counter / mid_time
+                    logger.info(f"Tested {counter} keys in {mid_time:.0f} seconds "
+                                f"(~{keys_per_second:.0f}/s)")
 
-            # Stop if prefix found
-            if eth_addr[-prefix_length:] == FIND_SUFFIX:
-                print("Success! Found key pair:")
-                print(f"Private key: {hex(private_key)}")
-                print(f"Ethereum wallet address: 0x{eth_addr}")
-                break
 
-    except KeyboardInterrupt:
-        logger.info("Exiting per user request (CTRL+C)")
-        # tell all processes to terminate and wait
-        print("Quitting (CTRL+C)...")
+        except KeyboardInterrupt:
+            logger.info("Exiting per user request (CTRL+C)")
+            # tell all processes to terminate and wait
+            print("Quitting (CTRL+C)...")
+            executor.shutdown(wait=False)
 
-    except Exception as error:
-        logging.error(error)
-        raise
+        except Exception as error:
+            logging.error(error)
+            raise
 
-    finally:
-        end_time = time.time() - start_time
-        keys_per_second = counter / end_time
-        print(f"Program ran for {end_time:.0f} seconds generating "
-              f"{counter} keys (~{keys_per_second:.0f}/s).")
-        return 0
+    end_time = time.perf_counter() - start_time
+    keys_per_second = counter / end_time
+    print(f"Program ran for {end_time:.0f} seconds generating "
+          f"{counter} keys (~{keys_per_second:.0f}/s).")
+    print()
+    return 0
 
 
 if __name__ == "__main__":
