@@ -170,8 +170,8 @@ def main():
     finally:
         end_time = time.time() - start_time
         keys_per_second = counter / end_time
-        logger.info(f"Program ran for {end_time:.0f} seconds generating "
-                    f"{counter} keys (~{keys_per_second:.0f}/s).")
+        print(f"Program ran for {end_time:.0f} seconds generating "
+              f"{counter} keys (~{keys_per_second:.0f}/s).")
         return 0
 
 
