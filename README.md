@@ -56,14 +56,15 @@ INFO:__main__:Program ran for 8 seconds generating 2551 keys (~309/s).
 
 ## Performance considerations
 
-The code is *not optimized* and it runs only on one single code, so don't
-expect wonders in terms of performance.
+This Python code is also *not optimized*, and it runs only on one single core.
 
-If you have a beefy machine, you can start multiple processes in for example
-using [tmux](https://tmuxcheatsheet.com/) and monitor with
-[htop](https://htop.dev/) that you have all CPUs running at full utilization.
+If you have a beefy machine, you can start multiple processes for example using
+[tmux](https://tmuxcheatsheet.com/) and monitor with [htop](https://htop.dev/)
+that you have all CPUs running at full utilization.
 
-The code has not been benchmarked if runs faster on standard
+![Running 8 parallel instances in tmux panes](screenshot-with-tmux.png)
+
+The code has not been benchmarked if it runs faster on standard
 [CPython](https://en.wikipedia.org/wiki/CPython) or
 [PyPy](https://en.wikipedia.org/wiki/PyPy) as PyPy fails to start due to missing
 library `_keccak.pypy36-pp73-x86_64-linux-gnu.so`.
@@ -72,7 +73,13 @@ In a quick benchmark the program did *not* run visibly faster when compiled with
 [Cython](https://cython.org/), perhaps due to lack of Cython specific
 optimizations in the code.
 
-![Running 8 parallel instances in tmux panes](screenshot-with-tmux.png)
+Currently this code can generate 200-300 keys per second on a  Intel i7-8650U
+CPU @ 1.90GHz. This is absolutely terrible compared to e.g.
+[Vanitygen](https://github.com/10gic/vanitygen-plusplus) which iterates 200 000
+(thousand!) keys per second per one CPU core. Vanitygen will run even faster if
+a OpenCL compatible GPU is available, and
+[Profanity2](https://github.com/1inch/profanity2) might run even faster (but it
+runs *only* on OpenCL compatible hardware.)
 
 
 ## Contributing
